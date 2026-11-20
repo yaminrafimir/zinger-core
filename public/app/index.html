@@ -1,0 +1,1179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Home-screen app setup (iPhone: Safari → Share → Add to Home Screen) -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Zinger">
+<meta name="theme-color" content="#FBF8F6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#15110F" media="(prefers-color-scheme: dark)">
+<style>
+  :root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+  body { margin: 0; }
+  img { max-width: 100%; }
+  [hidden] { display: none !important; }
+</style>
+<!--ARTIFACT-START-->
+<title>Zinger</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap">
+<style>
+  /* Layout: phone-first single column (max 560px), iOS-style large-title header, fixed bottom tab bar. */
+  :root {
+    --bg: #FBF8F6;
+    --surface: #FFFFFF;
+    --surface-2: #F3EDE9;
+    --fg: #1F1612;
+    --muted: #76665D;
+    --line: #EAE1DB;
+    --accent: #E94E26;
+    --accent-ink: #FFFFFF;
+    --accent-soft: rgba(233, 78, 38, 0.11);
+    --ok: #1E8E4E;
+    --warn: #C77405;
+    --bad: #D13A2E;
+    --info: #2C64C9;
+    --shadow: 0 10px 30px rgba(60, 30, 15, 0.12);
+    --display: "Bricolage Grotesque", ui-rounded, -apple-system, "SF Pro Rounded", system-ui, sans-serif;
+    --body: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, system-ui, sans-serif;
+    --radius: 14px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #15110F; --surface: #1E1916; --surface-2: #2A231F; --fg: #F6EFEA; --muted: #A9988E;
+      --line: #352C27; --accent: #FF6B43; --accent-ink: #1A0E09; --accent-soft: rgba(255, 107, 67, 0.16);
+      --ok: #3DBE78; --warn: #F0A33A; --bad: #FF6B5E; --info: #6C9CFF; --shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #15110F; --surface: #1E1916; --surface-2: #2A231F; --fg: #F6EFEA; --muted: #A9988E;
+    --line: #352C27; --accent: #FF6B43; --accent-ink: #1A0E09; --accent-soft: rgba(255, 107, 67, 0.16);
+    --ok: #3DBE78; --warn: #F0A33A; --bad: #FF6B5E; --info: #6C9CFF; --shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { background: var(--bg); }
+  body {
+    color: var(--fg); font: 16px/1.4 var(--body); margin: 0;
+    -webkit-font-smoothing: antialiased; overscroll-behavior-y: none;
+  }
+  body::before {
+    content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px);
+    z-index: 30; background: var(--bg);
+  }
+  button, input { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+  .wrap {
+    max-width: 560px; margin: 0 auto;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  .content { padding-block: 4px calc(96px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 18px; }
+  .content.no-tabs { padding-bottom: 32px; }
+
+  /* Header */
+  .topbar {
+    position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    -webkit-backdrop-filter: saturate(1.6) blur(16px); backdrop-filter: saturate(1.6) blur(16px);
+  }
+  .topbar .wrap { display: flex; align-items: center; gap: 8px; min-height: 48px; padding-block: 6px; }
+  .topbar .spacer { flex: 1; }
+  .back { display: inline-flex; align-items: center; gap: 2px; border: 0; background: none; color: var(--accent); font-weight: 600; padding: 8px 8px 8px 0; }
+  .icon-btn { border: 0; background: var(--surface-2); color: var(--fg); width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; }
+  .page-title { font: 800 34px/1.05 var(--display); letter-spacing: -0.02em; margin: 2px 0 2px; text-wrap: balance; }
+  .page-title.small { font-size: 26px; }
+
+  /* Lists and groups */
+  .group { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--line); overflow: hidden; }
+  .group-label { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin: 0 4px -10px; }
+  .row { display: flex; align-items: center; gap: 12px; padding: 13px 14px; width: 100%; border: 0; background: none; text-align: left; min-width: 0; }
+  .row + .row { border-top: 1px solid var(--line); }
+  button.row:active { background: var(--surface-2); }
+  .row .grow { flex: 1; min-width: 0; }
+  .row .chev { color: var(--muted); flex: none; }
+  .title { font-weight: 650; }
+  .sub { color: var(--muted); font-size: 14px; }
+  .clamp { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .one { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .num { font-variant-numeric: tabular-nums; }
+  .note { color: var(--muted); font-size: 13px; margin: -8px 4px 0; }
+
+  /* Thumbnails: tinted initials, with the shop's real photo on top when it loads */
+  .thumb {
+    position: relative; flex: none; display: grid; place-items: center; overflow: hidden;
+    border-radius: 12px; font: 800 20px var(--display); color: var(--tint); background: var(--tint-bg);
+  }
+  .thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .t56 { width: 56px; height: 56px; }
+  .t72 { width: 72px; height: 72px; }
+  .t40 { width: 40px; height: 40px; font-size: 15px; border-radius: 10px; }
+
+  /* Search */
+  .search { display: flex; align-items: center; gap: 8px; background: var(--surface-2); border-radius: 12px; padding: 0 12px; color: var(--muted); }
+  .search input { flex: 1; min-width: 0; border: 0; background: none; padding: 11px 0; outline: none; color: var(--fg); }
+
+  /* Buttons and fields */
+  .btn {
+    display: inline-flex; justify-content: center; align-items: center; gap: 8px; width: 100%;
+    border: 0; border-radius: 14px; padding: 15px 18px; font-weight: 700; font-size: 17px;
+    background: var(--accent); color: var(--accent-ink); transition: transform .12s ease, opacity .2s;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn[disabled] { opacity: 0.45; pointer-events: none; }
+  .btn.secondary { background: var(--accent-soft); color: var(--accent); }
+  .btn.danger { background: color-mix(in srgb, var(--bad) 13%, transparent); color: var(--bad); }
+  .btn.danger.armed { background: var(--bad); color: #fff; }
+  .link { border: 0; background: none; color: var(--accent); font-weight: 600; font-size: 15px; padding: 6px 2px; }
+  .links { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .field {
+    width: 100%; border: 1px solid transparent; background: var(--surface-2); border-radius: 12px;
+    padding: 14px; font-size: 17px; outline: none; color: var(--fg);
+  }
+  .field:focus { border-color: var(--accent); background: var(--surface); }
+  .field.code { text-align: center; letter-spacing: 0.4em; font-size: 22px; font-variant-numeric: tabular-nums; }
+  .stack { display: grid; gap: 12px; }
+  .error { color: var(--bad); font-size: 14px; display: flex; gap: 6px; align-items: flex-start; white-space: pre-line; }
+  .success { color: var(--ok); font-size: 15px; font-weight: 600; }
+  .spinner { width: 18px; height: 18px; border-radius: 50%; border: 2.5px solid currentColor; border-right-color: transparent; animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Welcome */
+  .welcome { padding-block: 28px 40px; display: grid; gap: 24px; }
+  .brand { display: grid; justify-items: start; gap: 10px; }
+  .brand-mark { width: 64px; height: 64px; border-radius: 18px; box-shadow: 0 10px 24px rgba(233, 78, 38, 0.35); }
+  .brand h1 { font: 800 44px/0.95 var(--display); letter-spacing: -0.03em; margin: 6px 0 0; }
+  .brand p { margin: 0; color: var(--muted); font-size: 17px; }
+  .segmented { display: grid; grid-template-columns: 1fr 1fr; background: var(--surface-2); padding: 3px; border-radius: 11px; }
+  .segmented button { border: 0; background: none; padding: 9px; border-radius: 9px; font-weight: 600; font-size: 15px; color: var(--muted); }
+  .segmented button.on { background: var(--surface); color: var(--fg); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12); }
+  .demo-banner { background: var(--accent-soft); color: var(--fg); border-radius: 12px; padding: 12px 14px; font-size: 14px; display: grid; gap: 4px; }
+  .demo-banner b { color: var(--accent); }
+  .center { text-align: center; }
+
+  /* Shop page */
+  .cover {
+    position: relative; height: 168px; border-radius: 18px; overflow: hidden; display: flex; align-items: flex-end;
+    padding: 16px; background: linear-gradient(135deg, var(--tint), color-mix(in srgb, var(--tint) 55%, #000));
+  }
+  .cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .cover::after { content: ""; position: absolute; inset: 0; background: linear-gradient(transparent 35%, rgba(0, 0, 0, 0.6)); }
+  .cover h2 { position: relative; z-index: 1; margin: 0; color: #fff; font: 800 28px/1.05 var(--display); letter-spacing: -0.02em; text-wrap: balance; }
+  .facts { display: grid; gap: 6px; font-size: 15px; }
+  .facts .line { display: flex; gap: 8px; align-items: flex-start; color: var(--muted); }
+  .facts .line svg { flex: none; margin-top: 2px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; vertical-align: 1px; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip { font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 99px; background: var(--accent-soft); color: var(--accent); }
+  .item-add { position: absolute; right: -4px; bottom: -4px; width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; border: 2px solid var(--surface); }
+  .incart { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 99px; background: var(--accent); color: var(--accent-ink); }
+  .price { font-weight: 650; font-variant-numeric: tabular-nums; }
+
+  /* Floating cart bar */
+  .cartbar {
+    position: fixed; left: 0; right: 0; z-index: 15;
+    bottom: calc(70px + env(safe-area-inset-bottom, 0px));
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+    pointer-events: none;
+  }
+  .cartbar button {
+    pointer-events: auto; max-width: 528px; margin: 0 auto; width: 100%; display: flex; align-items: center; gap: 10px;
+    border: 0; border-radius: 16px; padding: 15px 18px; background: var(--accent); color: var(--accent-ink);
+    font-weight: 700; font-size: 16px; box-shadow: var(--shadow); animation: rise .25s ease;
+  }
+  @keyframes rise { from { transform: translateY(16px); opacity: 0; } }
+
+  /* Stepper */
+  .stepper { display: inline-flex; align-items: center; background: var(--accent-soft); border-radius: 99px; flex: none; }
+  .stepper button { border: 0; background: none; color: var(--accent); width: 36px; height: 34px; display: grid; place-items: center; }
+  .stepper span { min-width: 22px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+  /* Tab bar */
+  .tabbar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 25;
+    background: color-mix(in srgb, var(--surface) 90%, transparent);
+    -webkit-backdrop-filter: saturate(1.6) blur(18px); backdrop-filter: saturate(1.6) blur(18px);
+    border-top: 1px solid var(--line);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px);
+  }
+  .tabbar nav { max-width: 560px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); }
+  .tabbar button { border: 0; background: none; padding: 8px 0 6px; display: grid; justify-items: center; gap: 2px; font-size: 11px; font-weight: 600; color: var(--muted); position: relative; }
+  .tabbar button.on { color: var(--accent); }
+  .badge { position: absolute; top: 3px; left: calc(50% + 6px); min-width: 18px; height: 18px; padding: 0 5px; border-radius: 99px; background: var(--bad); color: #fff; font-size: 11px; line-height: 18px; font-variant-numeric: tabular-nums; }
+
+  /* Bottom sheet */
+  .scrim { position: fixed; inset: 0; z-index: 40; background: rgba(0, 0, 0, 0.42); animation: fade .2s ease; }
+  @keyframes fade { from { opacity: 0; } }
+  .sheet {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 41; max-height: 88vh; overflow-y: auto;
+    background: var(--surface); border-radius: 22px 22px 0 0; box-shadow: var(--shadow);
+    padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px)); animation: slide .28s cubic-bezier(.2, .9, .3, 1);
+  }
+  @keyframes slide { from { transform: translateY(100%); } }
+  .sheet .wrap { display: grid; gap: 16px; padding-top: 10px; }
+  .grabber { width: 38px; height: 5px; border-radius: 99px; background: var(--line); margin: 0 auto 4px; }
+  .sheet h3 { font: 800 26px/1.1 var(--display); margin: 0; letter-spacing: -0.02em; text-wrap: balance; }
+  .option { display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-radius: 12px; border: 1.5px solid var(--line); background: none; width: 100%; text-align: left; }
+  .option.on { border-color: var(--accent); background: var(--accent-soft); }
+  .option[disabled] { opacity: 0.45; }
+  .radio { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--muted); flex: none; }
+  .option.on .radio { border: 6px solid var(--accent); }
+  .warnbox { background: color-mix(in srgb, var(--warn) 14%, transparent); border-radius: 12px; padding: 12px 14px; font-size: 14px; display: grid; gap: 10px; }
+
+  /* Orders */
+  .pill { font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 99px; color: var(--c); background: color-mix(in srgb, var(--c) 14%, transparent); white-space: nowrap; }
+  .timeline { display: grid; grid-template-columns: repeat(3, 1fr); position: relative; padding: 6px 0 2px; }
+  .timeline .step { display: grid; justify-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--muted); text-align: center; position: relative; z-index: 1; }
+  .timeline .step .bubble { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--surface-2); color: var(--muted); border: 2px solid var(--surface); }
+  .timeline .step.done { color: var(--fg); }
+  .timeline .step.done .bubble { background: var(--accent); color: var(--accent-ink); }
+  .timeline .track { position: absolute; top: 21px; left: 16.6%; right: 16.6%; height: 3px; border-radius: 3px; background: var(--surface-2); }
+  .timeline .track i { display: block; height: 100%; border-radius: 3px; background: var(--accent); transition: width .4s ease; }
+  .stars { display: flex; justify-content: center; gap: 6px; }
+  .stars button { border: 0; background: none; color: var(--warn); padding: 4px; }
+  .kv { display: flex; justify-content: space-between; gap: 12px; padding: 12px 14px; }
+  .kv + .kv { border-top: 1px solid var(--line); }
+  .kv span:first-child { color: var(--muted); }
+  .kv > span:first-child:not(:only-child) { flex: none; max-width: 60%; }
+  .kv.total span { color: var(--fg); font-weight: 750; font-size: 17px; }
+  .placed { display: grid; justify-items: center; gap: 10px; text-align: center; padding-block: 40px 10px; }
+  .placed .ok { width: 84px; height: 84px; border-radius: 50%; display: grid; place-items: center; background: color-mix(in srgb, var(--ok) 16%, transparent); color: var(--ok); animation: pop .5s cubic-bezier(.2, 1.6, .4, 1); }
+  @keyframes pop { from { transform: scale(0.4); opacity: 0; } }
+  .placed h2 { font: 800 30px var(--display); margin: 6px 0 0; }
+
+  /* Empty / loading */
+  .empty { display: grid; justify-items: center; gap: 8px; text-align: center; color: var(--muted); padding-block: 48px; }
+  .empty svg { color: var(--accent); opacity: 0.8; }
+  .empty b { color: var(--fg); font-size: 18px; }
+  .skeleton { height: 80px; border-radius: var(--radius); background: linear-gradient(90deg, var(--surface-2), var(--surface), var(--surface-2)); background-size: 200% 100%; animation: shimmer 1.2s infinite; }
+  @keyframes shimmer { to { background-position: -200% 0; } }
+
+  .avatar { width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 60%, #000)); color: #fff; font: 800 24px var(--display); flex: none; }
+
+  .toast {
+    position: fixed; left: 50%; z-index: 60; transform: translateX(-50%);
+    top: calc(12px + env(safe-area-inset-top, 0px));
+    background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 99px; font-weight: 600; font-size: 14px;
+    box-shadow: var(--shadow); animation: drop .25s ease; max-width: calc(100% - 32px);
+  }
+  @keyframes drop { from { transform: translate(-50%, -12px); opacity: 0; } }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toast" class="toast" hidden></div>
+
+<script>
+"use strict";
+/* Zinger customer web app. Talks to the Zinger Core customer API (/v2) on the same "api." host,
+   or runs on built-in sample data in demo mode. No build step: this one file is the app. */
+const FORCE_DEMO = false;
+
+// ---------- storage (best effort: private mode can throw) ----------
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+  del(k) { try { localStorage.removeItem(k); } catch {} },
+};
+
+function defaultBase() {
+  return /^https?:$/.test(location.protocol) && location.hostname.startsWith("api.") ? location.origin : "";
+}
+
+// ---------- state ----------
+const S = {
+  demo: FORCE_DEMO || store.get("zinger.demo", false),
+  token: store.get("zinger.token", null),
+  base: store.get("zinger.baseURL", defaultBase()),
+  profile: null,
+  tab: "shops",
+  stacks: null,
+  cart: store.get("zinger.cart", { shop: null, lines: [] }),
+  address: store.get("zinger.address", {}),
+  auth: { mode: "signin", method: "password", step: "id", authToken: null, error: null, busy: false, done: false },
+  sheet: null,
+};
+const F = {}; // form field values, kept across re-renders
+const MIN_PW = 6;
+
+function resetStacks() {
+  S.stacks = { shops: [{ v: "shops" }], cart: [{ v: "cart" }], orders: [{ v: "orders" }], profile: [{ v: "profile" }] };
+}
+resetStacks();
+
+// ---------- helpers ----------
+const h = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 });
+const money = (v) => inr.format(Number(v) || 0);
+const cap = (s) => String(s ?? "").replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+const shortId = (id) => String(id || "").slice(0, 8).toUpperCase();
+const cur = () => S.stacks[S.tab][S.stacks[S.tab].length - 1];
+
+function tint(name) {
+  let n = 0; for (const c of String(name)) n = (n * 31 + c.charCodeAt(0)) >>> 0;
+  const hues = [14, 28, 152, 200, 262, 330, 44, 175];
+  const hue = hues[n % hues.length];
+  return `--tint: hsl(${hue} 62% 46%); --tint-bg: hsl(${hue} 70% 46% / 0.14)`;
+}
+function initials(name) {
+  return String(name || "?").split(/\s+/).filter((w) => /[a-z0-9]/i.test(w)).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
+}
+function thumb(name, url, size = "t56") {
+  return `<div class="thumb ${size}" style="${tint(name)}" aria-hidden="true">${h(initials(name))}${url ? `<img src="${h(url)}" alt="" loading="lazy">` : ""}</div>`;
+}
+// Drop images that fail to load so the initials tile shows instead.
+document.addEventListener("error", (e) => { if (e.target.tagName === "IMG" && e.target.closest(".thumb, .cover")) e.target.remove(); }, true);
+
+const ICON = {
+  back: '<path d="M15 18l-6-6 6-6"/>',
+  chev: '<path d="M9 6l6 6-6 6"/>',
+  shop: '<path d="M3 9l1.5-5h15L21 9M3 9v11h18V9M3 9h18M9 20v-6h6v6"/>',
+  cart: '<circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.4 12.2a2 2 0 002 1.6h8.2a2 2 0 002-1.5L21 8H6"/>',
+  bag: '<path d="M5 8h14l-1 13H6L5 8z"/><path d="M9 8V6a3 3 0 016 0v2"/>',
+  user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>',
+  search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>',
+  pin: '<path d="M12 21s-7-6.2-7-11.5A7 7 0 0112 2.5a7 7 0 017 7C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>',
+  phone: '<path d="M5 3h4l2 5-2.5 1.5a11 11 0 005 5L15 12l5 2v4a2 2 0 01-2 2A16 16 0 013 5a2 2 0 012-2z"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  minus: '<path d="M5 12h14"/>',
+  trash: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',
+  check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  x: '<path d="M6 6l12 12M18 6L6 18"/>',
+  star: '<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/>',
+  server: '<rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/>',
+  key: '<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3"/>',
+  device: '<rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/>',
+  edit: '<path d="M4 20h4L19 9l-4-4L4 16v4z"/>',
+  truck: '<path d="M2 6h11v10H2zM13 10h4l4 4v2h-8"/><circle cx="6" cy="18" r="2"/><circle cx="17" cy="18" r="2"/>',
+  alert: '<circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5h.01"/>',
+  spark: '<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
+};
+const icon = (name, size = 22, sw = 2) =>
+  `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[name]}</svg>`;
+const starIcon = (filled) =>
+  `<svg width="34" height="34" viewBox="0 0 24 24" fill="${filled ? "currentColor" : "none"}" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true">${ICON.star}</svg>`;
+
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.hidden = false;
+  t.style.animation = "none"; void t.offsetWidth; t.style.animation = "";
+  clearTimeout(toast.timer); toast.timer = setTimeout(() => (t.hidden = true), 2200);
+}
+
+function idField(v) { return String(v).includes("@") ? "email" : "mobile"; }
+function idError(v) {
+  v = String(v || "").trim();
+  if (!v) return "Enter your email or mobile number.";
+  if (v.includes("@")) return /^\S+@\S+\.[a-z]+$/i.test(v) ? null : "Enter a valid email address.";
+  return /^[0-9]{10}$/.test(v) ? null : "Mobile numbers must be 10 digits.";
+}
+
+const STATUS = {
+  created: { t: "Draft", c: "var(--muted)" },
+  placed: { t: "Placed", c: "var(--info)" },
+  delivery_pending: { t: "Out for delivery", c: "var(--warn)" },
+  delivered: { t: "Delivered", c: "var(--ok)" },
+  cancelled: { t: "Cancelled", c: "var(--bad)" },
+};
+const statusPill = (s) => { const x = STATUS[s] || { t: cap(s), c: "var(--muted)" }; return `<span class="pill" style="--c:${x.c}">${h(x.t)}</span>`; };
+const orderTotal = (o) => (Number(o.price) || 0) + (Number(o.tax) || 0);
+
+// ---------- API ----------
+function errorMessage(json, status) {
+  const parts = [];
+  if (json && json.message) parts.push(json.message);
+  const r = json && json.reason;
+  if (r && typeof r === "object") {
+    for (const k of Object.keys(r).sort()) {
+      const v = Array.isArray(r[k]) ? r[k].join(", ") : String(r[k]);
+      const label = { otp: "Code", auth_token: "Code", password_confirmation: "Password confirmation" }[k] || cap(k);
+      if (v) parts.push(`${label}: ${v}`);
+    }
+  } else if (r) parts.push(String(r));
+  if (!parts.length) parts.push(status === 429 ? "Too many requests. Wait a moment and try again." : `Request failed (HTTP ${status}).`);
+  return parts.join("\n");
+}
+
+async function api(method, path, body, query) {
+  if (S.demo) return mockApi(method, path, body || {}, query || {});
+  if (!S.base) throw new Error("Add your Zinger server address first. Tap the server button on the sign-in screen.");
+  let url = S.base.replace(/\/+$/, "") + "/v2/" + path;
+  if (query) {
+    const q = new URLSearchParams();
+    for (const [k, v] of Object.entries(query)) if (v != null && v !== "") q.set(k, v);
+    const s = q.toString(); if (s) url += "?" + s;
+  }
+  const headers = { Accept: "application/json" };
+  if (S.token) headers.Authorization = S.token; // raw JWT, no "Bearer"
+  if (body) headers["Content-Type"] = "application/json";
+  let res;
+  try { res = await fetch(url, { method, headers, body: body ? JSON.stringify(body) : undefined }); }
+  catch { throw new Error("Couldn't reach the server. Check your connection and the server address."); }
+  let json = null; try { json = await res.json(); } catch {}
+  if (!res.ok) {
+    if (res.status === 401 && S.token) { signOutLocal(); toast("Your session ended. Sign in again."); }
+    throw new Error(errorMessage(json, res.status));
+  }
+  return (json && json.data) || {};
+}
+
+// ---------- demo data ----------
+const DEMO_SHOPS = [
+  { id: 1, name: "Annapoorna Mess", area: "Mylapore", tags: ["South Indian", "Meals", "Breakfast"], open: ["07:00", "22:30"],
+    address: { street: "14, Luz Church Road", area: "Mylapore", city: "Chennai", state: "Tamil Nadu", pincode: "600004" }, mobile: "9840012345",
+    items: [
+      ["Ghee Podi Dosa", "Dosa", "Crisp dosa with gunpowder and ghee.", [["portion", "Single", 90], ["portion", "Double", 160]]],
+      ["Mini Tiffin", "Breakfast", "Idli, vada, mini dosa, pongal and kesari.", [["portion", "Regular", 140]]],
+      ["Medu Vada", "Breakfast", "Two vadas with sambar and coconut chutney.", [["quantity", "2 pcs", 60], ["quantity", "4 pcs", 110]]],
+      ["South Indian Meals", "Meals", "Rice, sambar, rasam, two poriyal, kootu, curd and payasam.", [["portion", "Limited", 180], ["portion", "Unlimited", 240]]],
+      ["Filter Coffee", "Drinks", "Degree coffee in a davara set.", [["size", "Small", 35], ["size", "Large", 55]]],
+    ] },
+  { id: 2, name: "Chai Kadai Co.", area: "Adyar", tags: ["Tea", "Snacks"], open: ["06:30", "23:00"],
+    address: { street: "3rd Main Road, Gandhi Nagar", area: "Adyar", city: "Chennai", state: "Tamil Nadu", pincode: "600020" }, mobile: "9884055512",
+    items: [
+      ["Masala Chai", "Tea", "Strong milk tea with ginger and cardamom.", [["size", "Cutting", 20], ["size", "Full", 35]]],
+      ["Sulaimani", "Tea", "Black tea with lemon and mint.", [["size", "Glass", 30]]],
+      ["Onion Samosa", "Snacks", "Thin-crust samosa, made fresh every hour.", [["quantity", "3 pcs", 45], ["quantity", "6 pcs", 85]]],
+      ["Bun Butter Jam", "Snacks", "Soft bun, salted butter, mixed-fruit jam.", [["portion", "Regular", 40]]],
+    ] },
+  { id: 3, name: "Thread & Loom", area: "T. Nagar", tags: ["Fashion", "Handloom"], open: ["10:00", "21:00"],
+    address: { street: "22, Usman Road", area: "T. Nagar", city: "Chennai", state: "Tamil Nadu", pincode: "600017" }, mobile: "9500067788",
+    items: [
+      ["Kanchi Cotton Saree", "Sarees", "Handwoven cotton with contrast zari border.", [["colour", "Mustard", 2450], ["colour", "Teal", 2450], ["colour", "Maroon", 2650]]],
+      ["Linen Kurta", "Men", "Relaxed fit, mandarin collar.", [["size", "M", 1299], ["size", "L", 1299], ["size", "XL", 1399]]],
+      ["Block Print Dupatta", "Women", "Sanganeri print on soft mulmul.", [["colour", "Indigo", 690], ["colour", "Rust", 690]]],
+    ] },
+  { id: 4, name: "Bake Republic", area: "Besant Nagar", tags: ["Bakery", "Desserts"], open: ["09:00", "22:00"],
+    address: { street: "2nd Avenue", area: "Besant Nagar", city: "Chennai", state: "Tamil Nadu", pincode: "600090" }, mobile: "9445001122",
+    items: [
+      ["Sourdough Loaf", "Breads", "48-hour ferment, baked every morning.", [["weight", "500 g", 220], ["weight", "1 kg", 400]]],
+      ["Butter Croissant", "Pastries", "Laminated with French butter.", [["quantity", "1 pc", 120], ["quantity", "4 pcs", 440]]],
+      ["Filter Coffee Tres Leches", "Desserts", "Milk-soaked sponge with a decoction glaze.", [["portion", "Slice", 210], ["portion", "Whole (1 kg)", 1450]]],
+    ] },
+];
+const demoState = store.get("zinger.demoState", null) || {
+  profile: { name: "Priya Raman", email: "priya@example.com", mobile: "9876543210" },
+  orders: [],
+};
+function saveDemo() { store.set("zinger.demoState", demoState); }
+function demoItems(shop) {
+  return shop.items.map(([name, category, description, variants], i) => ({
+    id: `d${shop.id}i${i}`, name, category, description, item_type: shop.id === 3 ? "fashion" : "food", icon: null, cover_photos: [],
+    variants: variants.map(([ref, value, price], j) => ({ id: `d${shop.id}i${i}v${j}`, reference_id: ref, value, price, availability: 1 })),
+  }));
+}
+function nowIST() { const d = new Date(Date.now() + (330 + new Date().getTimezoneOffset()) * 60000); return d; }
+function stamp(d = nowIST()) { const p = (n) => String(n).padStart(2, "0"); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`; }
+
+async function mockApi(method, path, body, query) {
+  await new Promise((r) => setTimeout(r, 280));
+  const fail = (message, reason) => { throw new Error(errorMessage({ message, reason }, 400)); };
+  const seg = path.split("/");
+  if (path === "auth/login") {
+    if (body.purpose === "PASSWORD" && String(body.password || "").length < MIN_PW) fail("Login failed", { password: [`must be at least ${MIN_PW} characters`] });
+    if (body.purpose === "OTP" && body.otp !== "123456") fail("Login failed", { otp: ["is invalid or expired. In the demo the code is 123456"] });
+    return { token: "demo-token" };
+  }
+  if (path === "auth/otp") return { auth_token: "demo-auth" };
+  if (path === "auth/signup" || path === "auth/reset_password") {
+    if (body.otp !== "123456") fail("Verification failed", { otp: ["is invalid or expired. In the demo the code is 123456"] });
+    if (String(body.password).length < MIN_PW) fail("Verification failed", { password: [`must be at least ${MIN_PW} characters`] });
+    if (body.password !== body.password_confirmation) fail("Verification failed", { password_confirmation: ["doesn't match password"] });
+    return path === "auth/signup" ? { token: "demo-token" } : {};
+  }
+  if (path === "auth/logout") return {};
+  if (path === "user_profile") return { profile: demoState.profile };
+  if (path === "user_profile/modify") { demoState.profile.name = body.name; saveDemo(); return { profile: demoState.profile }; }
+  if (path === "user_profile/reset_password") { if (String(body.current_password).length < MIN_PW) fail("Couldn't update password", { current_password: ["is incorrect"] }); return {}; }
+  if (path === "user_profile/session") return { sessions: [
+    { token: "cur", login_ip: "49.37.12.8", login_time: stamp(), device_os: "iOS", browser: "Safari", current_session: true },
+    { token: "old", login_ip: "106.51.77.20", login_time: "2026-11-02 19:14:03", device_os: "Android", browser: "Zinger app", current_session: false },
+  ].filter((s) => !(demoState.endedSessions || []).includes(s.token)) };
+  if (seg[0] === "user_profile" && seg[1] === "session" && method === "DELETE") { (demoState.endedSessions ||= []).push(seg[2]); saveDemo(); return {}; }
+  if (path === "shop") {
+    const q = String(query.name || "").toLowerCase();
+    const list = DEMO_SHOPS.filter((s) => !q || s.name.toLowerCase().includes(q) || s.tags.join(" ").toLowerCase().includes(q));
+    return { shops: list.map((s) => ({ id: s.id, name: s.name, icon: null, tags: s.tags, area: s.area })), total: list.length };
+  }
+  if (seg[0] === "shop" && seg.length === 2) {
+    const s = DEMO_SHOPS.find((x) => x.id === Number(seg[1])); if (!s) fail("Shop not found");
+    const now = nowIST(); const hm = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+    return { shop: { id: s.id, name: s.name, icon: null, tags: s.tags, address: s.address, mobile: s.mobile, telephone: null, cover_photos: [],
+      opening_time: s.open[0], closing_time: s.open[1], open_now: s.open[0] <= hm && hm < s.open[1] } };
+  }
+  if (seg[0] === "shop" && seg[2] === "items") {
+    const s = DEMO_SHOPS.find((x) => x.id === Number(seg[1]));
+    const q = String(query.name || "").toLowerCase();
+    const items = demoItems(s).filter((i) => !q || i.name.toLowerCase().includes(q));
+    return { items, total: items.length };
+  }
+  if (path === "order" && method === "POST") {
+    const shop = DEMO_SHOPS.find((s) => demoItems(s).some((i) => i.id === body.items[0].item_id));
+    const all = demoItems(shop);
+    const items = body.items.map((l, k) => {
+      const it = all.find((i) => i.id === l.item_id); const v = it.variants.find((x) => x.id === l.item_variant_id);
+      return { id: `oi${Date.now()}${k}`, item_id: it.id, item_name: it.name, item_variant_id: v.id, item_variant_name: v.reference_id,
+        item_variant_value: v.value, quantity: l.quantity, actual_price: v.price, total_price: v.price * l.quantity };
+    });
+    const order = { id: "Dm" + Math.random().toString(36).slice(2, 12) + "x", shop_id: shop.id, order_status: "created", payment_status: "pending",
+      price: items.reduce((a, i) => a + i.total_price, 0), tax: 0, rating: 0, shipping_addr: body.shipping_addr, billing_addr: body.billing_addr,
+      created_at: stamp(), order_placed_time: null, items, transactions: [] };
+    demoState.orders.unshift(order); saveDemo();
+    return { order };
+  }
+  if (path === "order") return { orders: demoState.orders, total: demoState.orders.length, page_size: 20 };
+  if (seg[0] === "order") {
+    const o = demoState.orders.find((x) => x.id === seg[1]); if (!o) fail("Order not found");
+    if (method === "PUT") {
+      if (body.order_status) { o.order_status = body.order_status; if (body.order_status === "placed") o.order_placed_time = stamp(); }
+      if (body.rating != null) { if (!["delivered", "cancelled"].includes(o.order_status)) fail("Couldn't update order", { rating: ["can be added once the order is delivered or cancelled"] }); o.rating = body.rating; }
+      saveDemo();
+    }
+    return { order: o };
+  }
+  fail("This screen isn't available in the demo.");
+}
+
+// ---------- session ----------
+function setToken(t) { S.token = t; t ? store.set("zinger.token", t) : store.del("zinger.token"); }
+function signOutLocal() { setToken(null); S.profile = null; resetStacks(); S.tab = "shops"; S.sheet = null; render(); }
+async function loadProfile() { try { S.profile = (await api("GET", "user_profile")).profile; render(); } catch {} }
+
+// ---------- cart ----------
+function saveCart() { store.set("zinger.cart", S.cart); }
+const cartCount = () => S.cart.lines.reduce((a, l) => a + l.quantity, 0);
+const cartTotal = () => S.cart.lines.reduce((a, l) => a + l.quantity * l.variant.price, 0);
+function cartAdd(item, variant, shop, qty) {
+  if (S.cart.shop && S.cart.shop.id !== shop.id) S.cart = { shop: null, lines: [] };
+  S.cart.shop = { id: shop.id, name: shop.name, icon: shop.icon || null, area: shop.area || "" };
+  const line = S.cart.lines.find((l) => l.item.id === item.id && l.variant.id === variant.id);
+  if (line) line.quantity += qty;
+  else S.cart.lines.push({ item: { id: item.id, name: item.name }, variant, quantity: qty });
+  saveCart();
+}
+function cartSet(idx, qty) {
+  if (qty <= 0) S.cart.lines.splice(idx, 1); else S.cart.lines[idx].quantity = Math.min(qty, 50);
+  if (!S.cart.lines.length) S.cart.shop = null;
+  saveCart();
+}
+
+// ---------- navigation ----------
+function push(view) { S.stacks[S.tab].push(view); load(view); render(); scrollTo(0, 0); }
+function pop() { if (S.stacks[S.tab].length > 1) S.stacks[S.tab].pop(); render(); }
+function switchTab(tab) {
+  if (S.tab === tab && S.stacks[tab].length > 1) S.stacks[tab] = [S.stacks[tab][0]];
+  S.tab = tab; const v = cur();
+  if (v.v === "orders" || !v.loaded) load(v);
+  render(); scrollTo(0, 0);
+}
+async function load(view, more) {
+  const loader = VIEWS[view.v].load; if (!loader) { view.loaded = true; return; }
+  view.loading = true; if (!more) view.error = null;
+  render();
+  try { await loader(view, more); view.error = null; }
+  catch (e) { view.error = e.message; }
+  view.loading = false; view.loaded = true;
+  render();
+}
+
+// ---------- views ----------
+const empty = (ic, title, text) => `<div class="empty">${icon(ic, 40, 1.6)}<b>${h(title)}</b><span>${h(text)}</span></div>`;
+const errorBlock = (msg, act = "retry") => `<div class="empty">${icon("alert", 40, 1.6)}<b>Something went wrong</b><span style="white-space:pre-line">${h(msg)}</span><button class="btn secondary" style="width:auto" data-act="${act}">Try again</button></div>`;
+const skeletons = (n = 4) => Array.from({ length: n }, () => '<div class="skeleton"></div>').join("");
+const errorLine = (msg) => (msg ? `<div class="error" role="alert">${icon("alert", 18)}<span>${h(msg)}</span></div>` : "");
+const btn = (label, act, opts = {}) =>
+  `<button class="btn ${opts.cls || ""}" data-act="${act}" ${opts.data || ""} ${opts.disabled || opts.busy ? "disabled" : ""}>${opts.busy ? '<span class="spinner"></span>' : h(label)}</button>`;
+const input = (key, attrs, cls = "field") => `<input class="${cls}" id="f-${key}" data-model="${key}" value="${h(F[key] ?? "")}" ${attrs}>`;
+const searchBox = (key, placeholder) => `<label class="search">${icon("search", 18)}<input id="f-${key}" data-model="${key}" data-input="search" type="search" placeholder="${h(placeholder)}" value="${h(F[key] ?? "")}" autocomplete="off" enterkeyhint="search"></label>`;
+
+const VIEWS = {
+  shops: {
+    title: () => "Shops",
+    async load(v, more) {
+      const q = String(F.shopq || "").trim();
+      const res = await api("GET", "shop", null, { name: q.length > 3 ? q : "", offset: more ? v.shops.length : 0, page_size: 20 });
+      v.shops = more ? v.shops.concat(res.shops.filter((s) => !v.shops.some((x) => x.id === s.id))) : res.shops;
+      v.total = res.total ?? v.shops.length;
+    },
+    body(v) {
+      let list;
+      if (v.error && !v.shops) list = errorBlock(v.error);
+      else if (!v.shops) list = skeletons();
+      else if (!v.shops.length) list = String(F.shopq || "").trim().length > 3 ? empty("search", "No results", `No shops match “${F.shopq}”.`) : empty("shop", "No shops yet", "Shops will appear here once they open on Zinger.");
+      else list = `<div class="group">${v.shops.map((s) => `
+          <button class="row" data-act="openShop" data-id="${s.id}">
+            ${thumb(s.name, s.icon)}
+            <div class="grow"><div class="title one">${h(s.name)}</div>
+              ${s.area ? `<div class="sub one">${h(s.area)}</div>` : ""}
+              ${(s.tags || []).length ? `<div class="sub one" style="color:var(--accent)">${h(s.tags.slice(0, 3).join(" · "))}</div>` : ""}
+            </div><span class="chev">${icon("chev", 18)}</span>
+          </button>`).join("")}</div>
+          ${v.shops.length < v.total ? btn("Show more shops", "moreShops", { cls: "secondary", busy: v.loading }) : ""}`;
+      return list;
+    },
+    head: () => searchBox("shopq", "Search shops"),
+  },
+
+  shop: {
+    title: (v) => v.shop.name, small: true,
+    async load(v) {
+      const q = String(F["itemq" + v.shop.id] || "").trim();
+      const [detail, items] = await Promise.all([
+        v.detail ? Promise.resolve({ shop: v.detail }) : api("GET", `shop/${v.shop.id}`),
+        api("GET", `shop/${v.shop.id}/items`, null, { name: q.length > 3 ? q : "", page_size: 100 }),
+      ]);
+      v.detail = detail.shop; v.items = items.items;
+    },
+    body(v) {
+      const s = v.shop;
+      let items;
+      if (v.error && !v.items) items = errorBlock(v.error);
+      else if (!v.items) items = skeletons(3);
+      else if (!v.items.length) items = empty("bag", String(F["itemq" + s.id] || "").trim().length > 3 ? "No matching items" : "Nothing on the menu yet", "Check back soon.");
+      else {
+        const groups = {};
+        for (const it of v.items) (groups[cap(it.category || "Other")] ||= []).push(it);
+        items = Object.keys(groups).sort().map((g) => `<div class="group-label">${h(g)}</div><div class="group">${groups[g].map((it) => {
+          const vs = (it.variants || []).slice().sort((a, b) => a.price - b.price);
+          const inCart = S.cart.shop && S.cart.shop.id === s.id ? S.cart.lines.filter((l) => l.item.id === it.id).reduce((a, l) => a + l.quantity, 0) : 0;
+          return `<button class="row" style="align-items:flex-start" data-act="openItem" data-id="${h(it.id)}">
+              <div class="grow" style="display:grid;gap:3px">
+                <div class="title">${h(it.name)}</div>
+                ${it.description ? `<div class="sub clamp">${h(it.description)}</div>` : ""}
+                <div style="display:flex;gap:8px;align-items:center;margin-top:2px">
+                  ${vs.length ? `<span class="price">${vs.length > 1 ? "from " : ""}${money(vs[0].price)}</span>` : '<span class="sub">Unavailable</span>'}
+                  ${inCart ? `<span class="incart">${inCart} in cart</span>` : ""}
+                </div>
+              </div>
+              <div style="position:relative">${thumb(it.name, it.icon || (it.cover_photos && it.cover_photos[0] && it.cover_photos[0].url), "t72")}<span class="item-add">${icon("plus", 16, 2.6)}</span></div>
+            </button>`;
+        }).join("")}</div>`).join("");
+      }
+      return items;
+    },
+    head(v) {
+      const d = v.detail, s = v.shop;
+      const addr = d && d.address ? ["street", "area", "city", "state", "pincode"].map((k) => d.address[k]).filter(Boolean).join(", ") : "";
+      const phone = d && (d.mobile || d.telephone);
+      const facts = d ? `<div class="facts">
+          ${d.open_now != null ? `<div class="line" style="color:var(--fg)">${icon("clock", 18)}<span><span class="dot" style="background:${d.open_now ? "var(--ok)" : "var(--bad)"}"></span><b>${d.open_now ? "Open now" : "Closed"}</b>${d.opening_time ? ` <span style="color:var(--muted)">· ${h(d.opening_time)} – ${h(d.closing_time)}</span>` : ""}</span></div>` : ""}
+          ${addr ? `<div class="line">${icon("pin", 18)}<span>${h(addr)}</span></div>` : ""}
+          ${phone ? `<div class="line">${icon("phone", 18)}<a href="tel:${h(phone)}" style="color:var(--accent);text-decoration:none">${h(phone)}</a></div>` : ""}
+          ${(d.tags || []).length ? `<div class="chips">${d.tags.map((t) => `<span class="chip">${h(t)}</span>`).join("")}</div>` : ""}
+        </div>` : "";
+      const cover = (d && d.cover_photos && d.cover_photos[0] && d.cover_photos[0].url) || s.icon;
+      return `<div class="cover" style="${tint(s.name)}">${cover ? `<img src="${h(cover)}" alt="">` : ""}<h2>${h(s.name)}</h2></div>
+        ${facts}${searchBox("itemq" + s.id, "Search this shop")}`;
+    },
+  },
+
+  cart: {
+    title: () => "Cart",
+    body() {
+      if (!S.cart.lines.length) return empty("cart", "Your cart is empty", "Browse shops and tap an item to add it.") + btn("Browse shops", "goShops", { cls: "secondary" });
+      const s = S.cart.shop;
+      return `<div class="group"><div class="row">${thumb(s.name, s.icon, "t40")}<div class="grow"><div class="title one">${h(s.name)}</div>${s.area ? `<div class="sub">${h(s.area)}</div>` : ""}</div></div></div>
+        <div class="group">${S.cart.lines.map((l, i) => `
+          <div class="row"><div class="grow"><div class="title">${h(l.item.name)}</div>
+            <div class="sub">${h([cap(l.variant.reference_id), l.variant.value].filter(Boolean).join(": "))}</div>
+            <div class="sub num">${money(l.quantity * l.variant.price)}</div></div>
+            <div class="stepper"><button data-act="qty" data-i="${i}" data-d="-1" aria-label="Decrease">${icon(l.quantity <= 1 ? "trash" : "minus", 17)}</button><span>${l.quantity}</span><button data-act="qty" data-i="${i}" data-d="1" aria-label="Increase">${icon("plus", 17)}</button></div>
+          </div>`).join("")}
+          <div class="kv total"><span>Subtotal</span><span class="num">${money(cartTotal())}</span></div>
+        </div>
+        <p class="note">Taxes, if any, are added by the shop when it confirms your order.</p>
+        ${btn(`Checkout · ${money(cartTotal())}`, "checkout")}
+        <button class="link center" data-act="clearCart">Clear cart</button>`;
+    },
+  },
+
+  checkout: {
+    title: () => "Checkout", small: true,
+    body(v) {
+      if (v.placed) {
+        const o = v.placed;
+        return `<div class="placed"><div class="ok">${icon("check", 46, 2.6)}</div><h2>Order placed</h2>
+          <div class="sub num">Order #${h(shortId(o.id))} · ${money(orderTotal(o))}</div>
+          <p class="sub" style="max-width:32ch">The shop will confirm it shortly. You can follow it in Orders.</p></div>
+          ${btn("View my orders", "viewOrders")}`;
+      }
+      if (!S.cart.lines.length) return empty("cart", "Your cart is empty", "Add something before checking out.");
+      const fields = [["name", "Full name", "name"], ["street", "House no. & street", "address-line1"], ["area", "Area / locality", "address-line2"],
+        ["city", "City", "address-level2"], ["state", "State", "address-level1"], ["pincode", "PIN code", "postal-code"]];
+      return `<div class="group-label">Deliver to</div>
+        <form class="stack" data-submit="placeOrder" autocomplete="on">
+          ${fields.map(([k, ph, ac]) => input("addr_" + k, `placeholder="${ph}" autocomplete="${ac}" ${k === "pincode" ? 'inputmode="numeric" maxlength="6"' : ""}`)).join("")}
+        </form>
+        <div class="group-label">Order from ${h(S.cart.shop.name)}</div>
+        <div class="group">${S.cart.lines.map((l) => `<div class="kv"><span>${l.quantity}× ${h(l.item.name)}</span><span class="num">${money(l.quantity * l.variant.price)}</span></div>`).join("")}
+          <div class="kv total"><span>Total</span><span class="num">${money(cartTotal())}</span></div></div>
+        <div class="group"><div class="row">${icon("truck", 22)}<div class="grow"><div class="title">Pay on delivery</div><div class="sub">Pay the shop when your order arrives.</div></div></div></div>
+        ${errorLine(v.error)}
+        ${btn("Place order", "placeOrder", { busy: v.busy })}`;
+    },
+  },
+
+  orders: {
+    title: () => "Orders",
+    async load(v, more) {
+      const res = await api("GET", "order", null, { next_page_token: more ? v.next : "", sort_order: "DESC" });
+      const list = (res.orders || []).filter((o) => o.order_status !== "created");
+      v.orders = more ? v.orders.concat(list.filter((o) => !v.orders.some((x) => x.id === o.id))) : list;
+      v.next = res.next_page_token || null;
+    },
+    body(v) {
+      if (v.error && !v.orders) return errorBlock(v.error);
+      if (!v.orders) return skeletons();
+      if (!v.orders.length) return empty("bag", "No orders yet", "Orders you place will show up here.") + btn("Find something to order", "goShops", { cls: "secondary" });
+      return `<div class="group">${v.orders.map((o) => `
+          <button class="row" data-act="openOrder" data-id="${h(o.id)}">
+            <div class="grow"><div class="title">Order #${h(shortId(o.id))}</div>
+              <div class="sub one">${h((o.items || []).map((i) => i.item_name).join(", "))}</div>
+              <div class="sub" style="font-size:12px">${h(o.order_placed_time || o.created_at || "")}</div></div>
+            <div style="display:grid;justify-items:end;gap:4px"><span class="price">${money(orderTotal(o))}</span>${statusPill(o.order_status)}</div>
+          </button>`).join("")}</div>
+        ${v.next ? btn("Show older orders", "moreOrders", { cls: "secondary", busy: v.loading }) : ""}`;
+    },
+  },
+
+  order: {
+    title: (v) => `Order #${shortId(v.order.id)}`, small: true,
+    async load(v) { v.order = (await api("GET", `order/${v.order.id}`)).order; },
+    body(v) {
+      const o = v.order, st = o.order_status;
+      const steps = [["placed", "Placed"], ["delivery_pending", "On the way"], ["delivered", "Delivered"]];
+      const cur = steps.findIndex(([k]) => k === st);
+      const timeline = st === "cancelled"
+        ? `<div class="row" style="color:var(--bad);justify-content:center;font-weight:700">${icon("x", 20, 2.6)} This order was cancelled</div>`
+        : `<div class="timeline"><div class="track"><i style="width:${Math.max(0, cur) * 50}%"></i></div>${steps.map(([, t], i) => `<div class="step ${i <= cur ? "done" : ""}"><span class="bubble">${i <= cur ? icon("check", 16, 3) : ""}</span>${t}</div>`).join("")}</div>`;
+      const a = o.shipping_addr || {};
+      const addr = ["street", "area", "city", "state", "pincode"].map((k) => a[k]).filter(Boolean).join(", ");
+      const final = st === "delivered" || st === "cancelled";
+      const rating = Math.round(Number(o.rating) || 0);
+      return `<div class="group" style="padding:14px;display:grid;gap:12px;justify-items:center">${timeline}${statusPill(st)}</div>
+        <div class="group-label">Items</div>
+        <div class="group">${(o.items || []).map((i) => `<div class="kv"><span>${i.quantity}× ${h(i.item_name)}${i.item_variant_value ? ` <span style="font-size:13px">(${h(i.item_variant_value)})</span>` : ""}</span><span class="num" style="color:var(--fg)">${money(i.total_price)}</span></div>`).join("")}
+          ${Number(o.tax) > 0 ? `<div class="kv"><span>Tax</span><span class="num">${money(o.tax)}</span></div>` : ""}
+          <div class="kv total"><span>Total</span><span class="num">${money(orderTotal(o))}</span></div></div>
+        <div class="group">
+          <div class="kv"><span>Placed</span><span class="num">${h(o.order_placed_time || o.created_at || "—")}</span></div>
+          <div class="kv"><span>Payment</span><span>${h(cap(o.payment_status || "pending"))}</span></div>
+          ${addr ? `<div class="kv"><span>Deliver to</span><span style="text-align:right">${a.name ? `<b>${h(a.name)}</b><br>` : ""}${h(addr)}</span></div>` : ""}
+        </div>
+        ${final ? `<div class="group-label">Rate this order</div><div class="group" style="padding:10px"><div class="stars">${[1, 2, 3, 4, 5].map((n) => `<button data-act="rate" data-n="${n}" aria-label="${n} star${n > 1 ? "s" : ""}" ${v.busy ? "disabled" : ""}>${starIcon(n <= rating)}</button>`).join("")}</div></div>` : ""}
+        ${errorLine(v.error && v.order ? v.error : null)}
+        ${st === "created" || st === "placed" ? btn(v.armed ? "Tap again to cancel the order" : "Cancel order", "cancelOrder", { cls: "danger" + (v.armed ? " armed" : ""), busy: v.busy }) : ""}`;
+    },
+  },
+
+  profile: {
+    title: () => "Profile",
+    body(v) {
+      const p = S.profile || {};
+      const name = p.name || "Welcome";
+      const row = (ic, label, act, extra = "") => `<button class="row" data-act="${act}">${icon(ic, 20)}<span class="grow">${label}</span>${extra}<span class="chev">${icon("chev", 18)}</span></button>`;
+      return `<div class="group"><div class="row" style="padding:16px">
+          <div class="avatar">${h(initials(p.name || p.email || "Z"))}</div>
+          <div class="grow"><div class="title" style="font-size:20px">${h(name)}</div>
+            ${p.email ? `<div class="sub one">${h(p.email)}</div>` : ""}${p.mobile ? `<div class="sub">${h(p.mobile)}</div>` : ""}</div></div></div>
+        <div class="group-label">Account</div>
+        <div class="group">${row("edit", "Edit name", "goEditName")}${row("key", "Change password", "goPassword")}${row("device", "Signed-in devices", "goSessions")}</div>
+        <div class="group-label">App</div>
+        <div class="group">${row("server", "Server", "goServer", `<span class="sub one" style="max-width:45%">${S.demo ? "Demo" : h(S.base.replace(/^https?:\/\//, "") || "Not set")}</span>`)}</div>
+        ${btn(v.armed ? "Tap again to sign out" : "Sign out", "signOut", { cls: "danger" + (v.armed ? " armed" : "") })}`;
+    },
+  },
+
+  editName: {
+    title: () => "Edit name", small: true,
+    body(v) {
+      return `<form class="stack" data-submit="saveName">${input("name", 'placeholder="Your name" autocomplete="name"')}</form>${errorLine(v.error)}${btn("Save", "saveName", { busy: v.busy })}`;
+    },
+  },
+
+  password: {
+    title: () => "Change password", small: true,
+    body(v) {
+      return `<form class="stack" data-submit="savePassword">
+          ${input("pw_cur", 'type="password" placeholder="Current password" autocomplete="current-password"')}
+          ${input("pw_new", 'type="password" placeholder="New password" autocomplete="new-password"')}
+          ${input("pw_conf", 'type="password" placeholder="Confirm new password" autocomplete="new-password"')}
+        </form>${errorLine(v.error)}${v.saved ? '<div class="success">Password updated.</div>' : ""}${btn("Update password", "savePassword", { busy: v.busy })}`;
+    },
+  },
+
+  sessions: {
+    title: () => "Signed-in devices", small: true,
+    async load(v) { v.sessions = (await api("GET", "user_profile/session")).sessions; },
+    body(v) {
+      if (v.error && !v.sessions) return errorBlock(v.error);
+      if (!v.sessions) return skeletons(2);
+      return `<div class="group">${v.sessions.map((s) => `<div class="row">${icon(/ios|iphone|android/i.test(s.device_os || "") ? "device" : "server", 22)}
+          <div class="grow"><div class="title">${h([s.device_os, s.browser].filter(Boolean).join(" · ") || "Unknown device")} ${s.current_session ? '<span class="chip" style="margin-left:4px">This device</span>' : ""}</div>
+          <div class="sub num">${h([s.login_time, s.login_ip].filter(Boolean).join(" · "))}</div></div>
+          ${s.current_session ? "" : `<button class="link" style="color:var(--bad)" data-act="endSession" data-id="${h(s.token)}">Sign out</button>`}</div>`).join("")}</div>
+        ${errorLine(v.error && v.sessions ? v.error : null)}`;
+    },
+  },
+
+  server: { title: () => "Server", small: true, body: () => serverForm() },
+};
+
+function serverForm() {
+  if (F.base == null) F.base = S.base;
+  return `<div class="stack">
+      <label class="sub" for="f-base">Your Zinger Core customer API address</label>
+      ${input("base", 'type="url" inputmode="url" placeholder="https://api.yourshop.com" autocomplete="off" autocapitalize="off" spellcheck="false"')}
+      <p class="note" style="margin:0">The host starts with <b>api.</b>, the subdomain Zinger serves customers on. If this app is opened from your server, the address fills in automatically.</p>
+      ${btn("Save server", "saveServer")}
+      <div class="group" style="padding:14px;display:grid;gap:8px">
+        <div class="title">Demo mode ${S.demo ? '<span class="chip">On</span>' : ""}</div>
+        <div class="sub">Try the app with sample shops. Nothing is sent to a server.</div>
+        ${btn(S.demo ? "Turn off demo" : "Use demo data", "toggleDemo", { cls: "secondary" })}
+      </div></div>`;
+}
+
+// ---------- welcome / auth ----------
+function otpBlock(purpose, sendLabel, confirmLabel) {
+  const a = S.auth;
+  if (a.step === "id") return `${input("ident", 'type="email" inputmode="email" placeholder="Email or 10-digit mobile" autocomplete="username" autocapitalize="off" spellcheck="false"')}
+      ${errorLine(a.error)}${btn(sendLabel, "sendCode", { data: `data-purpose="${purpose}"`, busy: a.busy })}`;
+  return `<div class="sub">We sent a code to <b style="color:var(--fg)">${h(F.ident)}</b>.</div>
+      ${input("code", 'inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••"', "field code")}
+      ${errorLine(a.error)}${btn(confirmLabel, "verifyCode", { data: `data-purpose="${purpose}"`, busy: a.busy })}
+      <div class="links"><button class="link" data-act="changeIdent">Change ${idField(F.ident)}</button><button class="link" data-act="sendCode" data-purpose="${purpose}">Resend code</button></div>`;
+}
+
+function welcomeView() {
+  const a = S.auth;
+  let form;
+  if (a.mode === "reset") {
+    form = a.done
+      ? `<div class="empty">${icon("check", 40, 2)}<b>Password updated</b><span>Sign in with your new password.</span></div>${btn("Back to sign in", "authMode", { data: 'data-mode="signin"' })}`
+      : `<div class="page-title small">Reset password</div>
+        <form class="stack" data-submit="noop">${input("pw1", 'type="password" placeholder="New password" autocomplete="new-password"')}${input("pw2", 'type="password" placeholder="Confirm new password" autocomplete="new-password"')}</form>
+        ${otpBlock("RESET_PASSWORD", "Send reset code", "Reset password")}
+        <button class="link center" data-act="authMode" data-mode="signin">Back to sign in</button>`;
+  } else if (a.mode === "signup") {
+    form = `<form class="stack" data-submit="noop">${input("pw1", 'type="password" placeholder="Create a password" autocomplete="new-password"')}${input("pw2", 'type="password" placeholder="Confirm password" autocomplete="new-password"')}</form>
+      ${otpBlock("SIGNUP", "Verify and continue", "Create account")}
+      <p class="note" style="margin:0">We'll send a code to confirm it's you.</p>`;
+  } else if (a.method === "otp") {
+    form = `${otpBlock("LOGIN", "Send code", "Sign in")}<button class="link center" data-act="authMethod" data-method="password">Sign in with a password instead</button>`;
+  } else {
+    form = `<form class="stack" data-submit="signIn">
+        ${input("ident", 'type="email" inputmode="email" placeholder="Email or 10-digit mobile" autocomplete="username" autocapitalize="off" spellcheck="false"')}
+        ${input("pw", 'type="password" placeholder="Password" autocomplete="current-password" enterkeyhint="go"')}
+      </form>${errorLine(a.error)}${btn("Sign in", "signIn", { busy: a.busy })}
+      <div class="links"><button class="link" data-act="authMode" data-mode="reset">Forgot password?</button><button class="link" data-act="authMethod" data-method="otp">Use a one-time code</button></div>`;
+  }
+  const seg = a.mode === "reset" ? "" : `<div class="segmented" role="tablist">
+      <button class="${a.mode === "signin" ? "on" : ""}" data-act="authMode" data-mode="signin" role="tab">Sign in</button>
+      <button class="${a.mode === "signup" ? "on" : ""}" data-act="authMode" data-mode="signup" role="tab">Create account</button></div>`;
+  const banner = S.demo
+    ? `<div class="demo-banner"><div><b>Demo mode.</b> Sample shops, nothing leaves your phone.</div><div>Any password with ${MIN_PW}+ characters works. Codes are <b>123456</b>.</div></div>`
+    : !S.base ? `<div class="demo-banner"><div><b>Connect your server.</b> Tap the server button to add your Zinger address, or try the demo first.</div></div>` : "";
+  return `<div class="wrap welcome">
+      <div style="display:flex;justify-content:flex-end"><button class="icon-btn" data-act="openServerSheet" aria-label="Server settings">${icon("server", 19)}</button></div>
+      <div class="brand"><svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF7A45"/><stop offset="1" stop-color="#D63228"/></linearGradient></defs><rect width="64" height="64" rx="18" fill="url(#bg)"/><path d="M37 9L19 35h12l-4 20 19-28H34z" fill="#fff"/></svg>
+        <h1>Zinger</h1><p>Order from shops near you.</p></div>
+      ${banner}${seg}<div class="stack">${form}</div>
+      ${S.demo ? `<button class="link center" data-act="toggleDemo">Use my own server instead</button>` : `<button class="link center" data-act="toggleDemo">Try the demo with sample shops</button>`}
+    </div>${S.sheet ? sheetView() : ""}`;
+}
+
+// ---------- sheets ----------
+function sheetView() {
+  const sh = S.sheet;
+  let inner = "";
+  if (sh.type === "server") inner = `<h3>Server</h3>${serverForm()}`;
+  if (sh.type === "item") {
+    const it = sh.item;
+    const vs = (it.variants || []).slice().sort((a, b) => a.price - b.price);
+    const sel = vs.find((x) => x.id === sh.variantId) || vs[0];
+    const conflict = S.cart.shop && S.cart.shop.id !== sh.shop.id && S.cart.lines.length;
+    inner = `<div style="display:flex;gap:14px;align-items:center">${thumb(it.name, it.icon, "t72")}<div style="min-width:0"><h3>${h(it.name)}</h3>${it.category ? `<div class="sub" style="color:var(--accent);font-weight:600">${h(cap(it.category))}</div>` : ""}</div></div>
+      ${it.description ? `<div class="sub" style="font-size:16px">${h(it.description)}</div>` : ""}
+      ${vs.length > 1 ? `<div class="stack" style="gap:8px"><div class="title">Choose an option</div>${vs.map((x) => `<button class="option ${sel && sel.id === x.id ? "on" : ""}" data-act="pickVariant" data-id="${h(x.id)}" ${x.availability != null && x.availability <= 0 ? "disabled" : ""}><span class="radio"></span><span class="grow">${h([cap(x.reference_id), x.value].filter(Boolean).join(": ") || "Option")}${x.availability != null && x.availability <= 0 ? ' <span style="color:var(--bad);font-size:13px">Out of stock</span>' : ""}</span><span class="price">${money(x.price)}</span></button>`).join("")}</div>` : ""}
+      ${sel ? `<div style="display:flex;justify-content:space-between;align-items:center"><span class="title">Quantity</span>
+          <div class="stepper"><button data-act="sheetQty" data-d="-1" aria-label="Decrease">${icon("minus", 17)}</button><span>${sh.qty}</span><button data-act="sheetQty" data-d="1" aria-label="Increase">${icon("plus", 17)}</button></div></div>
+        ${conflict && sh.confirm ? `<div class="warnbox"><span>Your cart has items from <b>${h(S.cart.shop.name)}</b>. An order can only include one shop.</span>${btn("Clear cart and add", "addToCart", { data: 'data-force="1"' })}</div>`
+          : btn(`Add ${sh.qty} · ${money(sel.price * sh.qty)}`, "addToCart")}`
+        : '<div class="sub">This item isn\'t available right now.</div>'}`;
+  }
+  return `<div class="scrim" data-act="closeSheet"></div><div class="sheet" role="dialog" aria-modal="true"><div class="wrap"><div class="grabber"></div>${inner}</div></div>`;
+}
+
+// ---------- shell ----------
+function tabbar() {
+  const tabs = [["shops", "Shops", "shop"], ["cart", "Cart", "cart"], ["orders", "Orders", "bag"], ["profile", "Profile", "user"]];
+  const n = cartCount();
+  return `<div class="tabbar"><nav>${tabs.map(([k, label, ic]) => `<button class="${S.tab === k ? "on" : ""}" data-act="tab" data-tab="${k}" aria-label="${label}">${icon(ic, 24, S.tab === k ? 2.3 : 1.8)}${label}${k === "cart" && n ? `<span class="badge">${n}</span>` : ""}</button>`).join("")}</nav></div>`;
+}
+
+function render() {
+  const app = document.getElementById("app");
+  const ae = document.activeElement;
+  const focusId = ae && ae.id && ae.tagName === "INPUT" ? ae.id : null;
+  const sel = focusId ? [ae.selectionStart, ae.selectionEnd] : null;
+  const sheetScroll = document.querySelector(".sheet")?.scrollTop;
+
+  // While typing in a search box, refresh only the results so the iPhone keyboard stays open.
+  if (S.token && ae && ae.dataset && ae.dataset.input === "search" && render.lastView === cur() && !S.sheet) {
+    const body = document.getElementById("vbody");
+    if (body) { body.innerHTML = VIEWS[cur().v].body(cur()); return; }
+  }
+  if (!S.token) {
+    app.innerHTML = welcomeView();
+    render.lastView = null;
+  } else {
+    const stack = S.stacks[S.tab], v = cur(), view = VIEWS[v.v];
+    const showCartBar = v.v === "shop" && S.cart.lines.length && S.cart.shop && S.cart.shop.id === v.shop.id;
+    app.innerHTML = `
+      <header class="topbar"><div class="wrap">
+        ${stack.length > 1 ? `<button class="back" data-act="back">${icon("back", 22, 2.4)}Back</button>` : ""}
+        <span class="spacer"></span>
+        ${S.demo ? '<span class="chip">Demo</span>' : ""}
+      </div></header>
+      <main class="wrap content">
+        ${v.v === "shop" || (v.v === "checkout" && v.placed) ? "" : `<h1 class="page-title ${view.small ? "small" : ""}">${h(view.title(v))}</h1>`}
+        ${view.head ? view.head(v) : ""}
+        <div id="vbody" class="content" style="padding:0">${view.body(v)}</div>
+        ${showCartBar ? '<div style="height:64px"></div>' : ""}
+      </main>
+      ${showCartBar ? `<div class="cartbar"><button data-act="tab" data-tab="cart">${icon("cart", 20)}<span>${cartCount()} item${cartCount() === 1 ? "" : "s"} · View cart</span><span class="spacer" style="flex:1"></span><span class="num">${money(cartTotal())}</span></button></div>` : ""}
+      ${tabbar()}
+      ${S.sheet ? sheetView() : ""}`;
+    render.lastView = v;
+  }
+  if (focusId) {
+    const el = document.getElementById(focusId);
+    if (el) { el.focus({ preventScroll: true }); try { el.setSelectionRange(sel[0], sel[1]); } catch {} }
+  }
+  if (sheetScroll) { const s = document.querySelector(".sheet"); if (s) s.scrollTop = sheetScroll; }
+}
+
+// ---------- actions ----------
+const ACT = {
+  noop() {},
+  back: pop,
+  retry() { load(cur()); },
+  tab(d) { switchTab(d.tab); },
+  goShops() { switchTab("shops"); },
+
+  // auth
+  authMode(d) { Object.assign(S.auth, { mode: d.mode, step: "id", error: null, done: false, method: "password" }); render(); },
+  authMethod(d) { Object.assign(S.auth, { method: d.method, step: "id", error: null }); render(); },
+  changeIdent() { Object.assign(S.auth, { step: "id", error: null }); F.code = ""; render(); },
+  async signIn() {
+    const a = S.auth, err = idError(F.ident);
+    if (err) { a.error = err; return render(); }
+    if (String(F.pw || "").length < MIN_PW) { a.error = `Passwords are at least ${MIN_PW} characters.`; return render(); }
+    a.busy = true; a.error = null; render();
+    try {
+      const id = F.ident.trim();
+      const res = await api("POST", "auth/login", { purpose: "PASSWORD", [idField(id)]: id, password: F.pw });
+      signedIn(res.token);
+    } catch (e) { a.error = e.message; }
+    a.busy = false; render();
+  },
+  async sendCode(d) {
+    const a = S.auth, err = idError(F.ident);
+    if (err) { a.error = err; return render(); }
+    if ((d.purpose === "SIGNUP" || d.purpose === "RESET_PASSWORD") && !passwordsOk()) return render();
+    a.busy = true; a.error = null; render();
+    try {
+      const id = F.ident.trim();
+      const res = await api("POST", "auth/otp", { purpose: d.purpose, [idField(id)]: id });
+      Object.assign(a, { authToken: res.auth_token, step: "code" }); F.code = "";
+      toast("Code sent");
+      setTimeout(() => document.getElementById("f-code")?.focus(), 50);
+    } catch (e) { a.error = e.message; }
+    a.busy = false; render();
+  },
+  async verifyCode(d) {
+    const a = S.auth, otp = String(F.code || "").trim();
+    if (otp.length < 4) { a.error = "Enter the code we sent you."; return render(); }
+    if ((d.purpose === "SIGNUP" || d.purpose === "RESET_PASSWORD") && !passwordsOk()) return render();
+    a.busy = true; a.error = null; render();
+    try {
+      if (d.purpose === "LOGIN") signedIn((await api("POST", "auth/login", { purpose: "OTP", auth_token: a.authToken, otp })).token);
+      else if (d.purpose === "SIGNUP") signedIn((await api("POST", "auth/signup", { purpose: "PASSWORD", auth_token: a.authToken, otp, password: F.pw1, password_confirmation: F.pw2 })).token);
+      else { await api("POST", "auth/reset_password", { auth_token: a.authToken, otp, password: F.pw1, password_confirmation: F.pw2 }); a.done = true; }
+    } catch (e) { a.error = e.message; }
+    a.busy = false; render();
+  },
+
+  // server / demo
+  openServerSheet() { F.base = S.base; S.sheet = { type: "server" }; render(); },
+  closeSheet() { S.sheet = null; render(); },
+  saveServer() {
+    let b = String(F.base || "").trim().replace(/\/+$/, "");
+    if (b && !/^https?:\/\//i.test(b)) b = "https://" + b;
+    S.base = b; store.set("zinger.baseURL", b); F.base = b;
+    if (S.demo) ACT.toggleDemo(); else { toast(b ? "Server saved" : "Server cleared"); S.sheet = null; if (S.token) pop(); else render(); }
+  },
+  toggleDemo() {
+    S.demo = !S.demo; store.set("zinger.demo", S.demo);
+    S.cart = { shop: null, lines: [] }; saveCart();
+    setToken(null); S.profile = null; resetStacks(); S.tab = "shops"; S.sheet = null;
+    Object.assign(S.auth, { mode: "signin", method: "password", step: "id", error: null });
+    toast(S.demo ? "Demo mode on" : "Demo mode off");
+    render();
+  },
+
+  // shopping
+  openShop(d) { const v = cur(); push({ v: "shop", shop: v.shops.find((s) => String(s.id) === d.id) }); },
+  moreShops() { load(cur(), true); },
+  openItem(d) {
+    const v = cur(); const item = v.items.find((i) => i.id === d.id);
+    const vs = (item.variants || []).slice().sort((a, b) => a.price - b.price);
+    const first = vs.find((x) => x.availability == null || x.availability > 0) || vs[0];
+    S.sheet = { type: "item", item, shop: { ...v.shop, icon: v.shop.icon }, variantId: first && first.id, qty: 1, confirm: false };
+    render();
+  },
+  pickVariant(d) { S.sheet.variantId = d.id; render(); },
+  sheetQty(d) { S.sheet.qty = Math.max(1, Math.min(50, S.sheet.qty + Number(d.d))); render(); },
+  addToCart(d) {
+    const sh = S.sheet; const vs = (sh.item.variants || []).slice().sort((a, b) => a.price - b.price);
+    const sel = vs.find((x) => x.id === sh.variantId) || vs[0];
+    if (S.cart.shop && S.cart.shop.id !== sh.shop.id && S.cart.lines.length && !d.force) { sh.confirm = true; return render(); }
+    cartAdd(sh.item, sel, sh.shop, sh.qty);
+    S.sheet = null; toast(`Added to cart`); render();
+  },
+  qty(d) { const i = Number(d.i); cartSet(i, S.cart.lines[i].quantity + Number(d.d)); render(); },
+  clearCart() { S.cart = { shop: null, lines: [] }; saveCart(); render(); },
+  checkout() {
+    for (const k of ["name", "street", "area", "city", "state", "pincode"]) if (F["addr_" + k] == null) F["addr_" + k] = S.address[k] || (k === "name" && S.profile ? S.profile.name || "" : "");
+    push({ v: "checkout" });
+  },
+  async placeOrder() {
+    const v = cur(); if (v.busy) return;
+    const addr = {}; for (const k of ["name", "street", "area", "city", "state", "pincode"]) addr[k] = String(F["addr_" + k] || "").trim();
+    const missing = Object.entries(addr).filter(([, x]) => !x).map(([k]) => (k === "pincode" ? "PIN code" : cap(k)));
+    if (missing.length) { v.error = `Fill in: ${missing.join(", ")}.`; return render(); }
+    v.busy = true; v.error = null; render();
+    try {
+      const created = await api("POST", "order", {
+        items: S.cart.lines.map((l) => ({ item_id: l.item.id, item_variant_id: l.variant.id, quantity: l.quantity })),
+        shipping_addr: addr, billing_addr: addr,
+      });
+      const placed = await api("PUT", `order/${created.order.id}`, { order_status: "placed" });
+      S.address = addr; store.set("zinger.address", addr);
+      S.cart = { shop: null, lines: [] }; saveCart();
+      v.placed = placed.order;
+    } catch (e) { v.error = e.message; }
+    v.busy = false; render();
+  },
+  viewOrders() { S.stacks.cart = [{ v: "cart" }]; S.stacks.orders = [{ v: "orders" }]; switchTab("orders"); },
+
+  // orders
+  openOrder(d) { const v = cur(); push({ v: "order", order: v.orders.find((o) => o.id === d.id), loaded: true }); },
+  moreOrders() { load(cur(), true); },
+  async cancelOrder() {
+    const v = cur();
+    if (!v.armed) { v.armed = true; render(); setTimeout(() => { v.armed = false; render(); }, 3500); return; }
+    v.busy = true; v.armed = false; render();
+    try { v.order = (await api("PUT", `order/${v.order.id}`, { order_status: "cancelled" })).order; v.error = null; toast("Order cancelled"); }
+    catch (e) { v.error = e.message; }
+    v.busy = false; render();
+  },
+  async rate(d) {
+    const v = cur(), prev = v.order.rating;
+    v.order.rating = Number(d.n); v.busy = true; render();
+    try { v.order = (await api("PUT", `order/${v.order.id}`, { rating: Number(d.n) })).order; v.error = null; toast("Thanks for rating"); }
+    catch (e) { v.order.rating = prev; v.error = e.message; }
+    v.busy = false; render();
+  },
+
+  // profile
+  goEditName() { F.name = S.profile?.name || ""; push({ v: "editName" }); },
+  goPassword() { F.pw_cur = F.pw_new = F.pw_conf = ""; push({ v: "password" }); },
+  goSessions() { push({ v: "sessions" }); },
+  goServer() { F.base = S.base; push({ v: "server" }); },
+  async saveName() {
+    const v = cur(), name = String(F.name || "").trim();
+    if (!name) { v.error = "Enter your name."; return render(); }
+    v.busy = true; render();
+    try { S.profile = (await api("PUT", "user_profile/modify", { name })).profile; toast("Name saved"); v.busy = false; return pop(); }
+    catch (e) { v.error = e.message; }
+    v.busy = false; render();
+  },
+  async savePassword() {
+    const v = cur(); v.saved = false;
+    if (String(F.pw_new || "").length < MIN_PW) { v.error = `New password must be at least ${MIN_PW} characters.`; return render(); }
+    if (F.pw_new !== F.pw_conf) { v.error = "The new passwords don't match."; return render(); }
+    v.busy = true; v.error = null; render();
+    try { await api("PUT", "user_profile/reset_password", { current_password: F.pw_cur, new_password: F.pw_new, confirm_password: F.pw_conf }); v.saved = true; F.pw_cur = F.pw_new = F.pw_conf = ""; }
+    catch (e) { v.error = e.message; }
+    v.busy = false; render();
+  },
+  async endSession(d) {
+    const v = cur();
+    try { await api("DELETE", `user_profile/session/${encodeURIComponent(d.id)}`); v.sessions = v.sessions.filter((s) => s.token !== d.id); toast("Device signed out"); }
+    catch (e) { v.error = e.message; }
+    render();
+  },
+  async signOut() {
+    const v = cur();
+    if (!v.armed) { v.armed = true; render(); setTimeout(() => { v.armed = false; render(); }, 3500); return; }
+    try { await api("DELETE", "auth/logout"); } catch {}
+    signOutLocal(); toast("Signed out");
+  },
+};
+
+function passwordsOk() {
+  const a = S.auth;
+  if (String(F.pw1 || "").length < MIN_PW) { a.error = `Password must be at least ${MIN_PW} characters.`; return false; }
+  if (F.pw1 !== F.pw2) { a.error = "The passwords don't match."; return false; }
+  return true;
+}
+function signedIn(token) {
+  setToken(token); resetStacks(); S.tab = "shops"; S.sheet = null;
+  Object.assign(S.auth, { step: "id", error: null, authToken: null }); F.pw = F.pw1 = F.pw2 = F.code = "";
+  load(cur()); loadProfile();
+}
+
+// ---------- events ----------
+document.addEventListener("click", (e) => {
+  const el = e.target.closest("[data-act]"); if (!el || el.disabled) return;
+  e.preventDefault();
+  const fn = ACT[el.dataset.act]; if (fn) fn(el.dataset, el);
+});
+document.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const act = e.target.dataset.submit;
+  if (act && act !== "noop") ACT[act]({});
+});
+let searchTimer;
+document.addEventListener("input", (e) => {
+  const el = e.target; if (!el.dataset.model) return;
+  F[el.dataset.model] = el.value;
+  if (el.dataset.input === "search") {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => { const v = cur(); if (v.v === "shop") v.items = null; load(v); }, 350);
+  }
+});
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && S.sheet) ACT.closeSheet(); });
+
+// ---------- boot ----------
+render();
+if (S.token) { load(cur()); loadProfile(); }
+</script>
+<!--ARTIFACT-END-->
+</body>
+</html>
