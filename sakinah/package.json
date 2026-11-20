@@ -1,0 +1,13 @@
+{
+  "name": "sakinah",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sakinah — a family-safe, gender-segregated social network built on Islamic principles",
+  "license": "MIT",
+  "engines": { "node": ">=22.13" },
+  "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning server/index.js",
+    "reset": "rm -rf data && npm start",
+    "test": "node --disable-warning=ExperimentalWarning --test test/*.test.js"
+  }
+}
