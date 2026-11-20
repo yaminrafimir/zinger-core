@@ -3,7 +3,8 @@ class Api::AuthController < ApiController
   AUTH_PURPOSES = %w(PASSWORD OTP GOOGLE)
   OTP_PURPOSES = %w(SIGNUP LOGIN RESET_PASSWORD VERIFY_ACCOUNT)
 
-  skip_before_action :authenticate_request, except: [:logout, :otp], unless: -> { params['action'] == 'logout' || params['purpose'] == 'VERIFY_ACCOUNT' }
+  # Only logout and the VERIFY_ACCOUNT OTP need a signed-in customer; SIGNUP/LOGIN/RESET_PASSWORD OTPs must work anonymously.
+  skip_before_action :authenticate_request, unless: -> { params['action'] == 'logout' || params['purpose'] == 'VERIFY_ACCOUNT' }
 
   def otp
     begin
@@ -217,11 +218,11 @@ class Api::AuthController < ApiController
     customer = Customer.where(token['param'] => token['value']).first
     if customer.nil? || (!PlatformConfig['flexible_auth'] && customer.auth_mode != Customer::AUTH_MODE['OTP_AUTH'])
       render status: 404, json: { success: false, message: I18n.t('auth.login_failed'), reason: { 
-        key => [ I18n.t('auth.user.not_found') ] } }
+        token['param'] => [ I18n.t('auth.user.not_found') ] } }
       return
     elsif customer.is_blocked?
       render status: 403, json: { success: false, message: I18n.t('auth.login_failed'), reason: { 
-        key => [ I18n.t('auth.account_blocked', platform: PlatformConfig['name']) ] } }
+        token['param'] => [ I18n.t('auth.account_blocked', platform: PlatformConfig['name']) ] } }
       return
     end
     return customer
