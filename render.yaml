@@ -1,0 +1,23 @@
+# Render Blueprint for Sakinah — New + > Blueprint in the Render dashboard.
+services:
+  - type: web
+    name: sakinah
+    runtime: node
+    rootDir: sakinah
+    plan: starter            # needed for the persistent disk below (keeps accounts and posts between restarts)
+    buildCommand: echo "No build step needed"
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: TRUST_PROXY
+        value: "1"
+      - key: SAKINAH_DATA
+        value: /var/data
+      - key: SAKINAH_SEED       # set to "0" for a real launch without demo accounts
+        value: "1"
+    disk:
+      name: sakinah-data
+      mountPath: /var/data
+      sizeGB: 1

@@ -82,7 +82,7 @@ const MAGIC = {
 };
 const MIME = { jpeg: 'image/jpeg', jpg: 'image/jpeg', png: 'image/png', webp: 'image/webp' };
 
-function createApp({ db, uploadDir, publicDir }) {
+function createApp({ db, uploadDir, publicDir, trustProxy = process.env.TRUST_PROXY === '1' }) {
   fs.mkdirSync(uploadDir, { recursive: true });
   const stmts = new Map();
   const q = (sql) => {
@@ -354,7 +354,7 @@ function createApp({ db, uploadDir, publicDir }) {
   function startSession(ctx, user) {
     const token = crypto.randomBytes(32).toString('base64url');
     run('INSERT INTO sessions (token_hash, user_id, created_at) VALUES (?,?,?)', sha256(token), user.id, now());
-    ctx.setCookie(`sk_session=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${60 * 60 * 24 * 30}`);
+    ctx.setCookie(`sk_session=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${60 * 60 * 24 * 30}${ctx.secure ? '; Secure' : ''}`);
   }
 
   function validateNewAccount(body) {
@@ -403,7 +403,7 @@ function createApp({ db, uploadDir, publicDir }) {
 
   route('POST', '/api/auth/logout', (ctx) => {
     if (ctx.token) run('DELETE FROM sessions WHERE token_hash = ?', sha256(ctx.token));
-    ctx.setCookie('sk_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0');
+    ctx.setCookie(`sk_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0${ctx.secure ? '; Secure' : ''}`);
     return { ok: true };
   }, { auth: false });
 
@@ -543,6 +543,8 @@ function createApp({ db, uploadDir, publicDir }) {
   });
 
   // --- daily content
+  route('GET', '/api/health', () => ({ ok: true }), { auth: false });
+
   route('GET', '/api/daily', (ctx) => {
     const day = isDay(ctx.query.get('day')) ? ctx.query.get('day') : serverDay();
     return dailyFor(day);
@@ -892,7 +894,9 @@ function createApp({ db, uploadDir, publicDir }) {
       if (match.auth && !user) fail(401, 'Please sign in');
       const ctx = {
         req, res, params, body, user, token, query: url.searchParams,
-        ip: req.socket.remoteAddress,
+        // Behind a hosting proxy (TRUST_PROXY=1), the real client IP and scheme come from forwarded headers.
+        ip: trustProxy ? String(req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket.remoteAddress : req.socket.remoteAddress,
+        secure: trustProxy ? req.headers['x-forwarded-proto'] === 'https' : !!req.socket.encrypted,
         setCookie: (c) => headers.push(c),
         sendFile: (file, type, extra) => {
           if (!fs.existsSync(file)) fail(404, 'Not found');
