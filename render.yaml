@@ -1,10 +1,13 @@
 # Render Blueprint for Sakinah — New + > Blueprint in the Render dashboard.
+# Free plan: the app sleeps after 15 min idle, and its data resets on every restart
+# (the demo community is re-seeded automatically). For permanent data, switch
+# `plan` to `starter` and add a disk, with SAKINAH_DATA pointing at its mountPath.
 services:
   - type: web
     name: sakinah
     runtime: node
     rootDir: sakinah
-    plan: starter            # needed for the persistent disk below (keeps accounts and posts between restarts)
+    plan: free
     buildCommand: echo "No build step needed"
     startCommand: npm start
     healthCheckPath: /api/health
@@ -13,11 +16,5 @@ services:
         value: "22"
       - key: TRUST_PROXY
         value: "1"
-      - key: SAKINAH_DATA
-        value: /var/data
       - key: SAKINAH_SEED       # set to "0" for a real launch without demo accounts
         value: "1"
-    disk:
-      name: sakinah-data
-      mountPath: /var/data
-      sizeGB: 1
